@@ -1,0 +1,100 @@
+---
+- name: Link to libmali.so
+  file:
+    src: libmali.so
+    dest: "/usr/local/lib/aarch64-linux-gnu/{{ item }}"
+    owner: root
+    group: root
+    state: link
+  loop:
+    - libMali.so
+    - libEGL.so
+    - libEGL.so.1
+    - libEGL.so.1.0.0
+    - libEGL.so.1.4
+    - libgbm.so
+    - libgbm.so.1
+    - libgbm.so.1.0.0
+    - libGLESv1_CM.so
+    - libGLESv1_CM.so.1
+    - libGLESv1_CM.so.1.1
+    - libGLESv2.so
+    - libGLESv2.so.2
+    - libGLESv2.so.2.0
+    - libGLESv2.so.2.0.0
+    - libMaliOpenCL.so
+    - libOpenCL.so
+
+- name: Download libmali utgard
+  get_url:
+    dest: /usr/local/lib/aarch64-linux-gnu/
+    owner: root
+    group: root
+    mode: '0755'
+    url: https://github.com/useful64/install-mali-utgard/raw/master/libmali-utgard-450-r7p0-gbm.so
+  register: libmali
+
+- name: Link to downloaded libmali
+  file:
+    src: "{{ libmali.dest | basename }}"
+    dest: /usr/local/lib/aarch64-linux-gnu/libmali.so
+    owner: root
+    group: root
+    state: link
+
+- name: Download source mali kernel module
+  git:
+    repo: 'https://github.com/useful64/mali-utgard.git'
+    version: 'DX910-SW-99002-r9p0-01rel0-multiplatform'
+    dest: /tmp/malidrv
+    recursive: no
+    force: yes
+    depth: 1
+
+- name: Complie mali.ko
+  make:
+    chdir: /tmp/malidrv/driver/src/devicedrv/mali/
+    params:
+      KERNELRELEASE={{ ansible_kernel }}
+      USING_DT=1
+      USING_UMP=0
+      ARCH=arm64
+      MALI_PLATFORM=rk
+      MALI_DMA_BUF_MAP_ON_ATTACH=1
+      USING_PROFILING=0
+      KDIR=/lib/modules/{{ ansible_kernel }}/build
+      #KDIR=/usr/src/linux-source-{{ ansible_kernel }}
+      #USING_DVFS=0
+      #USING_DEVFREQ=1
+      #BUILD=debug
+
+- name: fix udev mali
+  replace:
+    path: /etc/udev/rules.d/50-mali.rules
+    regexp: 'mali0'
+    replace: 'mali*'
+
+- name: Copy module to actual kernel and load it
+  block:
+    - file:
+        path: "/usr/lib/modules/{{ ansible_kernel }}/extra"
+        owner: root
+        group: root
+        mode: '0755'
+        state: directory
+    - copy:
+        remote_src: yes
+        src: /tmp/malidrv/driver/src/devicedrv/mali/mali.ko
+        dest: "/usr/lib/modules/{{ ansible_kernel }}/extra/mali.ko"
+        owner: root
+        group: root
+        mode: '0644'
+    - shell: "depmod {{ ansible_kernel }}"
+    - modprobe:
+        name: mali
+        state: present
+
+- name: Make load mali module early dkms
+  lineinfile:
+    path: /etc/initramfs-tools/modules
+    line: 'mali'

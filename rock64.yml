@@ -1,0 +1,4 @@
+---
+- hosts: rock64
+  roles:
+    - { role: install-mali-utgard, tags: install-mali-utgard }
