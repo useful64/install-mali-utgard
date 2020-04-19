@@ -1,4 +1,12 @@
 ---
+- name: Create or ensure local lib path exists
+  file:
+    path: /usr/local/lib/aarch64-linux-gnu
+    owner: root
+    group: root
+    mode: '0755'
+    state: directory
+
 - name: Link to libmali.so
   file:
     src: libmali.so
