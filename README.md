@@ -16,4 +16,4 @@ ansible-playbook -i inventory.ini -l rock64 -t install-mali-utgard rock64.yml
 ```
 ### Notes
 
-This is tested with armbian (focal) on rock64
+This is tested with armbian (focal) and linux kernel 5.7 on rock64
