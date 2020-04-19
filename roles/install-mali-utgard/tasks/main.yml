@@ -25,18 +25,27 @@
     - libMaliOpenCL.so
     - libOpenCL.so
 
-- name: Download libmali utgard
-  get_url:
-    dest: /usr/local/lib/aarch64-linux-gnu/
+#- name: Download libmali utgard
+#  get_url:
+#    dest: /usr/local/lib/aarch64-linux-gnu/
+#    owner: root
+#    group: root
+#    mode: '0755'
+#    url: https://github.com/useful64/install-mali-utgard/raw/master/libmali-utgard-450-r7p0-gbm.so
+#  register: libmali
+
+- name: copy libmali utgard
+  copy:
+    src: libmali-utgard-450-r7p0-gbm.so
+    dest: /usr/local/lib/aarch64-linux-gnu/libmali-utgard-450-r7p0-gbm.so
     owner: root
     group: root
     mode: '0755'
-    url: https://github.com/useful64/install-mali-utgard/raw/master/libmali-utgard-450-r7p0-gbm.so
-  register: libmali
 
 - name: Link to downloaded libmali
   file:
-    src: "{{ libmali.dest | basename }}"
+    #src: "{{ libmali.dest | basename }}"
+    src: libmali-utgard-450-r7p0-gbm.so
     dest: /usr/local/lib/aarch64-linux-gnu/libmali.so
     owner: root
     group: root
